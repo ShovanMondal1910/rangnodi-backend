@@ -1,10 +1,18 @@
 import { Router } from 'express';
 import healthRouter from './health.route';
 import apiRouter from './api.route';
+import categoryRouter from './category.route';
+import subcategoryRouter from './subcategory.route';
+import catalogRouter from './catalog.route';
 
 const router = Router();
 
 router.use('/health', healthRouter);
 router.use('/api/v1', apiRouter);
+
+// Catalog Hierarchy & Resource Endpoints
+router.use('/api/v1/categories', categoryRouter);
+router.use('/api/v1/subcategories', subcategoryRouter);
+router.use('/api/v1/catalog', catalogRouter);
 
 export default router;

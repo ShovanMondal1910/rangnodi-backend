@@ -21,9 +21,9 @@ export const connectDB = async (): Promise<void> => {
     const client = await pool.connect();
     const res = await client.query('SELECT current_database(), current_user, version()');
     client.release();
-    console.log(`ðŸ“¦ Connected to PostgreSQL Database: ${res.rows[0].current_database} as user: ${res.rows[0].current_user}`);
+    console.log(`Connected to PostgreSQL Database: ${res.rows[0].current_database} as user: ${res.rows[0].current_user}`);
   } catch (error) {
-    console.error('â Œ Failed to connect to PostgreSQL database:', error);
+    console.error('Failed to connect to PostgreSQL database:', error);
     throw error;
   }
 };
