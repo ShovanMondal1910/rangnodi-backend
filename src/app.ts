@@ -14,7 +14,7 @@ const createApp = (): Application => {
   app.use(helmet());
   app.use(
     cors({
-      origin: config.corsOrigin,
+      origin: config.corsOrigin === '*' ? true : config.corsOrigin,
       credentials: true,
     })
   );

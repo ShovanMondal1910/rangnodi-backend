@@ -66,7 +66,7 @@ export class ProductController {
 
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const product = await productService.getProductById(id);
       if (!product) {
         res.status(404).json({ success: false, message: 'Product not found' });
@@ -80,7 +80,7 @@ export class ProductController {
 
   async serveMainImage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const img = await productService.getMainImage(id);
       if (!img) {
         res.status(404).send('Image not found');
@@ -96,7 +96,7 @@ export class ProductController {
 
   async serveGalleryImage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { imageId } = req.params;
+      const imageId = req.params.imageId as string;
       const img = await productService.getGalleryImage(imageId);
       if (!img) {
         res.status(404).send('Image not found');
@@ -112,7 +112,7 @@ export class ProductController {
 
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const updated = await productService.updateProduct(id, req.body);
       if (!updated) {
         res.status(404).json({ success: false, message: 'Product not found' });
@@ -130,7 +130,7 @@ export class ProductController {
 
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const success = await productService.deleteProduct(id);
       if (!success) {
         res.status(404).json({ success: false, message: 'Product not found' });
@@ -144,7 +144,7 @@ export class ProductController {
 
   async deleteGalleryImage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { imageId } = req.params;
+      const imageId = req.params.imageId as string;
       const success = await productService.deleteGalleryImage(imageId);
       res.json({ success, message: success ? 'Gallery image deleted' : 'Image not found' });
     } catch (error) {

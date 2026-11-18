@@ -37,7 +37,7 @@ export class AdminController {
 
   async getAdminById(req: Request, res: Response): Promise<void> {
     try {
-      const admin = await adminService.getAdminById(req.params.id);
+      const admin = await adminService.getAdminById(req.params.id as string);
       res.status(200).json({
         success: true,
         data: admin,
@@ -83,7 +83,7 @@ export class AdminController {
 
   async updateAdmin(req: Request, res: Response): Promise<void> {
     try {
-      const updated = await adminService.updateAdmin(req.params.id, req.body);
+      const updated = await adminService.updateAdmin(req.params.id as string, req.body);
       res.status(200).json({
         success: true,
         message: 'Admin updated successfully',
@@ -99,7 +99,7 @@ export class AdminController {
 
   async deleteAdmin(req: Request, res: Response): Promise<void> {
     try {
-      await adminService.deleteAdmin(req.params.id);
+      await adminService.deleteAdmin(req.params.id as string);
       res.status(200).json({
         success: true,
         message: 'Admin account deleted successfully',
