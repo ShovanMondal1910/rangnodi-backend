@@ -9,6 +9,7 @@ export interface CreateCustomerDto {
   email: string;
   password?: string | null;
   phone?: string | null;
+  address?: string | null;
   status?: UserStatus;
   avatar?: string | null;
 }
@@ -18,6 +19,7 @@ export interface UpdateCustomerDto {
   email?: string;
   password?: string | null;
   phone?: string | null;
+  address?: string | null;
   status?: UserStatus;
   avatar?: string | null;
 }
@@ -34,6 +36,7 @@ export class CustomerService {
       email: user.email,
       avatar: avatarUrl,
       phone: user.phone,
+      address: user.address,
       role: user.role,
       status: user.status,
       oauth_provider: user.oauth_provider,
@@ -97,6 +100,7 @@ export class CustomerService {
         fullname,
         email,
         phone,
+        address,
         role,
         status,
         oauth_provider,
@@ -140,6 +144,7 @@ export class CustomerService {
         fullname,
         email,
         phone,
+        address,
         role,
         status,
         oauth_provider,
@@ -249,6 +254,7 @@ export class CustomerService {
         email,
         password,
         phone,
+        address,
         role,
         status,
         (avatar_blob IS NOT NULL) AS has_avatar
@@ -263,6 +269,7 @@ export class CustomerService {
     const current = checkRes.rows[0];
     const fullname = dto.fullname !== undefined ? dto.fullname.trim() : current.fullname;
     const phone = dto.phone !== undefined ? (dto.phone?.trim() || null) : current.phone;
+    const address = dto.address !== undefined ? (dto.address?.trim() || null) : current.address;
     const status = dto.status || current.status;
 
     let email = current.email;
@@ -312,16 +319,18 @@ export class CustomerService {
           email = $2,
           password = $3,
           phone = $4,
-          status = $5,
-          avatar_blob = $6,
-          avatar_mime = $7,
+          address = $5,
+          status = $6,
+          avatar_blob = $7,
+          avatar_mime = $8,
           updated_at = NOW()
-        WHERE user_id = $8 AND role = 'customer'
+        WHERE user_id = $9 AND role = 'customer'
         RETURNING 
           user_id,
           fullname,
           email,
           phone,
+          address,
           role,
           status,
           oauth_provider,
@@ -330,7 +339,7 @@ export class CustomerService {
           updated_at,
           (avatar_blob IS NOT NULL) AS has_avatar;
       `;
-      params = [fullname, email, passwordHash, phone, status, avatarBlob, avatarMime, userId];
+      params = [fullname, email, passwordHash, phone, address, status, avatarBlob, avatarMime, userId];
     } else {
       updateQuery = `
         UPDATE users SET
@@ -338,14 +347,16 @@ export class CustomerService {
           email = $2,
           password = $3,
           phone = $4,
-          status = $5,
+          address = $5,
+          status = $6,
           updated_at = NOW()
-        WHERE user_id = $6 AND role = 'customer'
+        WHERE user_id = $7 AND role = 'customer'
         RETURNING 
           user_id,
           fullname,
           email,
           phone,
+          address,
           role,
           status,
           oauth_provider,
@@ -354,7 +365,7 @@ export class CustomerService {
           updated_at,
           (avatar_blob IS NOT NULL) AS has_avatar;
       `;
-      params = [fullname, email, passwordHash, phone, status, userId];
+      params = [fullname, email, passwordHash, phone, address, status, userId];
     }
 
     const res = await pool.query<UserRow>(updateQuery, params);

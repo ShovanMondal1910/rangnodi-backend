@@ -8,6 +8,8 @@ import productRouter from './product.route';
 import authRouter from './auth.route';
 import adminRouter from './admin.route';
 import customerRouter from './customer.route';
+import cartRouter from './cart.route';
+import orderRouter from './order.route';
 
 const router = Router();
 
@@ -18,6 +20,10 @@ router.use('/api/v1', apiRouter);
 router.use('/api/v1/auth', authRouter);
 router.use('/api/v1/admins', adminRouter);
 router.use('/api/v1/customers', customerRouter);
+
+// Shopping Cart & Orders Endpoints
+router.use('/api/v1/cart', cartRouter);
+router.use('/api/v1/orders', orderRouter);
 
 // Catalog Hierarchy & Resource Endpoints
 router.use('/api/v1/categories', categoryRouter);

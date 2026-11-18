@@ -22,6 +22,7 @@ export class AuthService {
       email: user.email,
       avatar: avatarUrl,
       phone: user.phone,
+      address: user.address,
       role: user.role,
       status: user.status,
       oauth_provider: user.oauth_provider,
@@ -105,7 +106,7 @@ export class AuthService {
         user_id, fullname, email, password, phone, role, status, oauth_provider, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, 'customer', 'active', 'local', NOW(), NOW())
       RETURNING 
-        user_id, fullname, email, phone, role, status, oauth_provider, email_verified_at, created_at, updated_at,
+        user_id, fullname, email, phone, address, role, status, oauth_provider, email_verified_at, created_at, updated_at,
         (avatar_blob IS NOT NULL) AS has_avatar;
     `;
 
@@ -133,7 +134,7 @@ export class AuthService {
 
     const findQuery = `
       SELECT 
-        user_id, fullname, email, password, phone, role, status, oauth_provider, email_verified_at, created_at, updated_at,
+        user_id, fullname, email, password, phone, address, role, status, oauth_provider, email_verified_at, created_at, updated_at,
         (avatar_blob IS NOT NULL) AS has_avatar
       FROM users 
       WHERE email = $1 
@@ -226,7 +227,7 @@ export class AuthService {
     // 2. Look for user by email or by (oauth_provider, oauth_id)
     const findQuery = `
       SELECT 
-        user_id, fullname, email, password, phone, role, status, oauth_provider, email_verified_at, created_at, updated_at,
+        user_id, fullname, email, password, phone, address, role, status, oauth_provider, email_verified_at, created_at, updated_at,
         (avatar_blob IS NOT NULL) AS has_avatar
       FROM users 
       WHERE email = $1 OR (oauth_provider = 'google' AND oauth_id = $2)
@@ -251,7 +252,7 @@ export class AuthService {
             updated_at = NOW()
         WHERE user_id = $4
         RETURNING 
-          user_id, fullname, email, phone, role, status, oauth_provider, email_verified_at, created_at, updated_at,
+          user_id, fullname, email, phone, address, role, status, oauth_provider, email_verified_at, created_at, updated_at,
           (avatar_blob IS NOT NULL) AS has_avatar;
       `;
       const updatedRes = await pool.query<UserRow>(updateQuery, [
@@ -276,7 +277,7 @@ export class AuthService {
         $5, $6, CURRENT_TIMESTAMP, NOW(), NOW()
       )
       RETURNING 
-        user_id, fullname, email, phone, role, status, oauth_provider, email_verified_at, created_at, updated_at,
+        user_id, fullname, email, phone, address, role, status, oauth_provider, email_verified_at, created_at, updated_at,
         (avatar_blob IS NOT NULL) AS has_avatar;
     `;
 

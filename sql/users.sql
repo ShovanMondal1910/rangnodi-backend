@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_blob             BYTEA DEFAULT NULL,
     avatar_mime             VARCHAR(50) DEFAULT 'image/jpeg',
     phone                   VARCHAR(20) DEFAULT NULL,
+    address                 TEXT DEFAULT NULL,
     role                    user_role NOT NULL DEFAULT 'customer',
     status                  user_status NOT NULL DEFAULT 'active',
     

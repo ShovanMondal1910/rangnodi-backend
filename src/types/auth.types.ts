@@ -10,6 +10,7 @@ export interface UserRow {
   avatar_mime?: string | null;
   has_avatar?: boolean;
   phone?: string | null;
+  address?: string | null;
   role: UserRole;
   status: UserStatus;
   oauth_provider: string;
@@ -45,6 +46,7 @@ export interface SanitizedUser {
   email: string;
   avatar?: string | null;
   phone?: string | null;
+  address?: string | null;
   role: UserRole;
   status: UserStatus;
   oauth_provider: string;
