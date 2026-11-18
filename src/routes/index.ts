@@ -7,15 +7,17 @@ import catalogRouter from './catalog.route';
 import productRouter from './product.route';
 import authRouter from './auth.route';
 import adminRouter from './admin.route';
+import customerRouter from './customer.route';
 
 const router = Router();
 
 router.use('/health', healthRouter);
 router.use('/api/v1', apiRouter);
 
-// Authentication & Admin Management Endpoints
+// Authentication, Admin & Customer Management Endpoints
 router.use('/api/v1/auth', authRouter);
 router.use('/api/v1/admins', adminRouter);
+router.use('/api/v1/customers', customerRouter);
 
 // Catalog Hierarchy & Resource Endpoints
 router.use('/api/v1/categories', categoryRouter);

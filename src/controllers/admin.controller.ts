@@ -50,6 +50,28 @@ export class AdminController {
     }
   }
 
+  async getAvatar(req: Request, res: Response): Promise<void> {
+    try {
+      const avatar = await adminService.getAdminAvatar(req.params.id as string);
+      if (!avatar || !avatar.blob) {
+        res.status(404).json({
+          success: false,
+          message: 'Avatar image not found',
+        });
+        return;
+      }
+
+      res.setHeader('Content-Type', avatar.mime || 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.send(avatar.blob);
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to retrieve avatar',
+      });
+    }
+  }
+
   async generateId(req: Request, res: Response): Promise<void> {
     try {
       const id = await adminService.generateUniqueAdminId();

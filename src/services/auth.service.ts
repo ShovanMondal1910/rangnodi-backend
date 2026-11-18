@@ -8,11 +8,15 @@ export class AuthService {
    * Helper to strip sensitive fields (password, tokens)
    */
   private sanitizeUser(user: UserRow): SanitizedUser {
+    const avatarUrl = (user.has_avatar || user.avatar_blob)
+      ? (user.role === 'admin' ? `/api/v1/admins/${user.user_id}/avatar` : `/api/v1/customers/${user.user_id}/avatar`)
+      : null;
+
     return {
       user_id: user.user_id,
       fullname: user.fullname,
       email: user.email,
-      avatar: user.avatar,
+      avatar: avatarUrl,
       phone: user.phone,
       role: user.role,
       status: user.status,
@@ -180,19 +184,17 @@ export class AuthService {
         throw new Error('Your account has been suspended. Please contact customer support.');
       }
 
-      // Update avatar and ensure oauth_id is linked
+      // Ensure oauth_id is linked
       const updateQuery = `
         UPDATE users 
         SET oauth_provider = 'google',
             oauth_id = COALESCE(oauth_id, $1),
-            avatar = COALESCE($2, avatar),
             email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP)
-        WHERE user_id = $3
+        WHERE user_id = $2
         RETURNING *;
       `;
       const updatedRes = await pool.query<UserRow>(updateQuery, [
         googleId,
-        dto.avatar || null,
         user.user_id,
       ]);
 
@@ -205,8 +207,8 @@ export class AuthService {
 
     const insertQuery = `
       INSERT INTO users (
-        user_id, fullname, email, password, avatar, role, status, oauth_provider, oauth_id, email_verified_at
-      ) VALUES ($1, $2, $3, NULL, $4, 'customer', 'active', 'google', $5, CURRENT_TIMESTAMP)
+        user_id, fullname, email, password, role, status, oauth_provider, oauth_id, email_verified_at
+      ) VALUES ($1, $2, $3, NULL, 'customer', 'active', 'google', $4, CURRENT_TIMESTAMP)
       RETURNING *;
     `;
 
@@ -214,7 +216,6 @@ export class AuthService {
       userId,
       fullname,
       email,
-      dto.avatar || null,
       googleId,
     ]);
 

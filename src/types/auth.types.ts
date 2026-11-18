@@ -6,7 +6,9 @@ export interface UserRow {
   fullname: string;
   email: string;
   password?: string | null;
-  avatar?: string | null;
+  avatar_blob?: Buffer | null;
+  avatar_mime?: string | null;
+  has_avatar?: boolean;
   phone?: string | null;
   role: UserRole;
   status: UserStatus;

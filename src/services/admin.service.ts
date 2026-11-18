@@ -1,6 +1,7 @@
 import pool from '../config/database';
 import bcrypt from 'bcryptjs';
 import { generate10DigitId } from '../utils/idGenerator';
+import { parseBase64Image, isBase64Image } from '../utils/imageParser';
 import { UserRow, SanitizedUser, UserStatus } from '../types/auth.types';
 
 export interface CreateAdminDto {
@@ -46,11 +47,15 @@ export class AdminService {
   }
 
   private sanitizeAdmin(user: UserRow): SanitizedUser {
+    const avatarUrl = (user.has_avatar || user.avatar_blob)
+      ? `/api/v1/admins/${user.user_id}/avatar`
+      : null;
+
     return {
       user_id: user.user_id,
       fullname: user.fullname,
       email: user.email,
-      avatar: user.avatar,
+      avatar: avatarUrl,
       phone: user.phone,
       role: user.role,
       status: user.status,
@@ -86,11 +91,34 @@ export class AdminService {
   }
 
   /**
+   * Retrieve binary avatar photo for an admin
+   */
+  async getAdminAvatar(userId: string): Promise<{ blob: Buffer; mime: string } | null> {
+    const res = await pool.query<{ avatar_blob: Buffer | null; avatar_mime: string | null }>(
+      'SELECT avatar_blob, avatar_mime FROM users WHERE user_id = $1',
+      [userId]
+    );
+
+    if (res.rowCount === 0 || !res.rows[0].avatar_blob) {
+      return null;
+    }
+
+    return {
+      blob: res.rows[0].avatar_blob,
+      mime: res.rows[0].avatar_mime || 'image/jpeg',
+    };
+  }
+
+  /**
    * Fetch all users who have role = 'admin'
    */
   async getAllAdmins(search?: string, status?: string): Promise<SanitizedUser[]> {
     let query = `
-      SELECT * FROM users 
+      SELECT 
+        user_id, fullname, email, phone, role, status, oauth_provider, 
+        email_verified_at, created_at, updated_at, 
+        (avatar_blob IS NOT NULL) AS has_avatar 
+      FROM users 
       WHERE role = 'admin'
     `;
     const params: any[] = [];
@@ -100,12 +128,12 @@ export class AdminService {
       query += ` AND status = $${params.length}`;
     }
 
-    if (search && search.trim()) {
+    if (search && search.trim().length > 0) {
       params.push(`%${search.trim().toLowerCase()}%`);
       query += ` AND (
         LOWER(fullname) LIKE $${params.length} 
         OR LOWER(email) LIKE $${params.length} 
-        OR user_id LIKE $${params.length} 
+        OR user_id LIKE $${params.length}
         OR phone LIKE $${params.length}
       )`;
     }
@@ -121,7 +149,11 @@ export class AdminService {
    */
   async getAdminById(userId: string): Promise<SanitizedUser> {
     const res = await pool.query<UserRow>(
-      'SELECT * FROM users WHERE user_id = $1 AND role = $2',
+      `SELECT 
+        user_id, fullname, email, phone, role, status, oauth_provider, 
+        email_verified_at, created_at, updated_at, 
+        (avatar_blob IS NOT NULL) AS has_avatar 
+      FROM users WHERE user_id = $1 AND role = $2`,
       [userId, 'admin']
     );
 
@@ -133,18 +165,18 @@ export class AdminService {
   }
 
   /**
-   * Create a new Admin account
+   * Create a new Admin
    */
   async createAdmin(dto: CreateAdminDto): Promise<SanitizedUser> {
-    const fullname = dto.fullname?.trim();
-    const email = dto.email?.trim().toLowerCase();
-    const password = dto.password;
+    const fullname = dto.fullname.trim();
+    const email = dto.email.trim().toLowerCase();
+    const password = dto.password.trim();
 
     if (!fullname) {
       throw new Error('Full name is required');
     }
     if (!email || !email.includes('@')) {
-      throw new Error('Valid email address is required');
+      throw new Error('Valid email is required');
     }
     if (!password || password.length < 6) {
       throw new Error('Password must be at least 6 characters');
@@ -160,13 +192,24 @@ export class AdminService {
     const passwordHash = await bcrypt.hash(password, 10);
     const status = dto.status || 'active';
     const phone = dto.phone?.trim() || null;
-    const avatar = dto.avatar?.trim() || null;
+
+    let avatarBlob: Buffer | null = null;
+    let avatarMime: string = 'image/jpeg';
+
+    if (dto.avatar && isBase64Image(dto.avatar)) {
+      const parsed = parseBase64Image(dto.avatar);
+      avatarBlob = parsed.buffer;
+      avatarMime = parsed.mime;
+    }
 
     const query = `
       INSERT INTO users (
-        user_id, fullname, email, password, phone, avatar, role, status, oauth_provider, email_verified_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, 'admin', $7, 'local', CURRENT_TIMESTAMP)
-      RETURNING *;
+        user_id, fullname, email, password, phone, avatar_blob, avatar_mime, role, status, oauth_provider, email_verified_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'admin', $8, 'local', CURRENT_TIMESTAMP)
+      RETURNING 
+        user_id, fullname, email, phone, role, status, oauth_provider, 
+        email_verified_at, created_at, updated_at, 
+        (avatar_blob IS NOT NULL) AS has_avatar;
     `;
 
     const res = await pool.query<UserRow>(query, [
@@ -175,7 +218,8 @@ export class AdminService {
       email,
       passwordHash,
       phone,
-      avatar,
+      avatarBlob,
+      avatarMime,
       status,
     ]);
 
@@ -186,9 +230,11 @@ export class AdminService {
    * Update an existing Admin
    */
   async updateAdmin(userId: string, dto: UpdateAdminDto): Promise<SanitizedUser> {
-    // 1. Verify admin exists
     const checkRes = await pool.query<UserRow>(
-      'SELECT * FROM users WHERE user_id = $1 AND role = $2',
+      `SELECT 
+        user_id, fullname, email, password, phone, 
+        (avatar_blob IS NOT NULL) AS has_avatar 
+      FROM users WHERE user_id = $1 AND role = $2`,
       [userId, 'admin']
     );
     if (checkRes.rowCount === 0) {
@@ -197,7 +243,6 @@ export class AdminService {
 
     const current = checkRes.rows[0];
 
-    // 2. Validate email uniqueness if changed
     if (dto.email) {
       const email = dto.email.trim().toLowerCase();
       if (email !== current.email) {
@@ -215,9 +260,7 @@ export class AdminService {
     const email = dto.email !== undefined ? dto.email.trim().toLowerCase() : current.email;
     const phone = dto.phone !== undefined ? (dto.phone ? dto.phone.trim() : null) : current.phone;
     const status = dto.status !== undefined ? dto.status : current.status;
-    const avatar = dto.avatar !== undefined ? (dto.avatar ? dto.avatar.trim() : null) : current.avatar;
 
-    // Password handling: if provided and not empty, hash it; otherwise keep current
     let passwordHash = current.password;
     if (dto.password && dto.password.trim().length > 0) {
       if (dto.password.length < 6) {
@@ -226,53 +269,83 @@ export class AdminService {
       passwordHash = await bcrypt.hash(dto.password, 10);
     }
 
-    const updateQuery = `
-      UPDATE users SET
-        fullname = $1,
-        email = $2,
-        phone = $3,
-        status = $4,
-        avatar = $5,
-        password = $6,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE user_id = $7 AND role = 'admin'
-      RETURNING *;
-    `;
+    let avatarBlob: Buffer | null = null;
+    let avatarMime: string = 'image/jpeg';
+    let updateAvatarBlob = false;
 
-    const res = await pool.query<UserRow>(updateQuery, [
-      fullname,
-      email,
-      phone,
-      status,
-      avatar,
-      passwordHash,
-      userId,
-    ]);
+    if (dto.avatar !== undefined) {
+      updateAvatarBlob = true;
+      if (dto.avatar && isBase64Image(dto.avatar)) {
+        const parsed = parseBase64Image(dto.avatar);
+        avatarBlob = parsed.buffer;
+        avatarMime = parsed.mime;
+      } else {
+        avatarBlob = null;
+        avatarMime = 'image/jpeg';
+      }
+    }
 
+    let updateQuery: string;
+    let params: any[];
+
+    if (updateAvatarBlob) {
+      updateQuery = `
+        UPDATE users SET
+          fullname = $1,
+          email = $2,
+          phone = $3,
+          status = $4,
+          avatar_blob = $5,
+          avatar_mime = $6,
+          password = $7,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $8 AND role = 'admin'
+        RETURNING 
+          user_id, fullname, email, phone, role, status, oauth_provider, 
+          email_verified_at, created_at, updated_at, 
+          (avatar_blob IS NOT NULL) AS has_avatar;
+      `;
+      params = [fullname, email, phone, status, avatarBlob, avatarMime, passwordHash, userId];
+    } else {
+      updateQuery = `
+        UPDATE users SET
+          fullname = $1,
+          email = $2,
+          phone = $3,
+          status = $4,
+          password = $5,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $6 AND role = 'admin'
+        RETURNING 
+          user_id, fullname, email, phone, role, status, oauth_provider, 
+          email_verified_at, created_at, updated_at, 
+          (avatar_blob IS NOT NULL) AS has_avatar;
+      `;
+      params = [fullname, email, phone, status, passwordHash, userId];
+    }
+
+    const res = await pool.query<UserRow>(updateQuery, params);
     return this.sanitizeAdmin(res.rows[0]);
   }
 
   /**
-   * Delete an admin (with safeguard: cannot delete last active admin)
+   * Delete an Admin (prevent self-deletion or deleting last active admin)
    */
   async deleteAdmin(userId: string): Promise<void> {
-    // Check total active admins
-    const countRes = await pool.query(
-      "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'"
-    );
-    const activeCount = parseInt(countRes.rows[0].count, 10);
-
-    const targetRes = await pool.query<UserRow>(
-      'SELECT * FROM users WHERE user_id = $1 AND role = $2',
+    const check = await pool.query(
+      'SELECT role FROM users WHERE user_id = $1 AND role = $2',
       [userId, 'admin']
     );
-
-    if (targetRes.rowCount === 0) {
+    if (check.rowCount === 0) {
       throw new Error(`Admin with ID '${userId}' not found`);
     }
 
-    if (activeCount <= 1 && targetRes.rows[0].status === 'active') {
-      throw new Error('Cannot delete the only remaining active administrator');
+    const adminCount = await pool.query(
+      "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'"
+    );
+    const count = parseInt(adminCount.rows[0]?.count || '0', 10);
+    if (count <= 1) {
+      throw new Error('Cannot delete the last remaining active Administrator');
     }
 
     await pool.query('DELETE FROM users WHERE user_id = $1 AND role = $2', [userId, 'admin']);
