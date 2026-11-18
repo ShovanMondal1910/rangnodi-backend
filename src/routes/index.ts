@@ -4,6 +4,7 @@ import apiRouter from './api.route';
 import categoryRouter from './category.route';
 import subcategoryRouter from './subcategory.route';
 import catalogRouter from './catalog.route';
+import productRouter from './product.route';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/api/v1', apiRouter);
 router.use('/api/v1/categories', categoryRouter);
 router.use('/api/v1/subcategories', subcategoryRouter);
 router.use('/api/v1/catalog', catalogRouter);
+router.use('/api/v1/products', productRouter);
 
 export default router;

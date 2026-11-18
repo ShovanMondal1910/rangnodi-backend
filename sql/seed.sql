@@ -24,17 +24,42 @@ ON CONFLICT (category_id) DO UPDATE SET
     sort_order = EXCLUDED.sort_order,
     status = EXCLUDED.status;
 
--- Insert Sample Subcategories for MEN
+-- Delete existing sample subcategories for MEN to cleanly refresh
+DELETE FROM subcategories WHERE category_id = '8578399821';
+
+-- Insert Sample Subcategories for MEN matching the screenshot
 INSERT INTO subcategories (subcategory_id, category_id, group_name, name, slug, sort_order, status)
 VALUES
-    ('1029384756', '8578399821', 'Ethnic Wear', 'Panjabi & Kurta', 'panjabi-kurta', 1, 'active'),
-    ('2938475610', '8578399821', 'Ethnic Wear', 'Kabli Sets', 'kabli-sets', 2, 'active'),
-    ('3847561029', '8578399821', 'Western Wear', 'Casual Shirts', 'casual-shirts', 3, 'active'),
-    ('4756102938', '8578399821', 'Western Wear', 'Formal Shirts', 'formal-shirts', 4, 'active'),
-    ('5610293847', '8578399821', 'Western Wear', 'Polo & T-Shirts', 'polo-t-shirts', 5, 'active'),
-    ('6102938475', '8578399821', 'Bottoms', 'Chinos & Trousers', 'chinos-trousers', 6, 'active'),
-    ('7029384756', '8578399821', 'Bottoms', 'Denim Jeans', 'denim-jeans', 7, 'active')
-ON CONFLICT (subcategory_id) DO NOTHING;
+    -- TRADITIONAL & ETHNIC
+    ('1029384756', '8578399821', 'TRADITIONAL & ETHNIC', 'Panjabis', 'panjabis', 1, 'active'),
+    ('1029384757', '8578399821', 'TRADITIONAL & ETHNIC', 'Pajamas', 'pajamas', 2, 'active'),
+    ('1029384758', '8578399821', 'TRADITIONAL & ETHNIC', 'Kabli Sets', 'kabli-sets', 3, 'active'),
+    ('1029384759', '8578399821', 'TRADITIONAL & ETHNIC', 'Waistcoats', 'waistcoats', 4, 'active'),
+    ('1029384760', '8578399821', 'TRADITIONAL & ETHNIC', 'Kurtas', 'kurtas', 5, 'active'),
+
+    -- WESTERN WEAR
+    ('2029384751', '8578399821', 'WESTERN WEAR', 'Casual Shirts', 'casual-shirts', 1, 'active'),
+    ('2029384752', '8578399821', 'WESTERN WEAR', 'Formal Shirts', 'formal-shirts', 2, 'active'),
+    ('2029384753', '8578399821', 'WESTERN WEAR', 'Polo Shirts', 'polo-shirts', 3, 'active'),
+    ('2029384754', '8578399821', 'WESTERN WEAR', 'T-Shirts', 't-shirts', 4, 'active'),
+    ('2029384755', '8578399821', 'WESTERN WEAR', 'Denim & Jeans', 'denim-jeans', 5, 'active'),
+    ('2029384756', '8578399821', 'WESTERN WEAR', 'Chinos & Trousers', 'chinos-trousers', 6, 'active'),
+
+    -- OUTERWEAR & LAYERING
+    ('3029384751', '8578399821', 'OUTERWEAR & LAYERING', 'Jackets', 'jackets', 1, 'active'),
+    ('3029384752', '8578399821', 'OUTERWEAR & LAYERING', 'Hoodies & Sweatshirts', 'hoodies-sweatshirts', 2, 'active'),
+    ('3029384753', '8578399821', 'OUTERWEAR & LAYERING', 'Blazers & Suits', 'blazers-suits', 3, 'active'),
+
+    -- ACCESSORIES
+    ('4029384751', '8578399821', 'ACCESSORIES', 'Leather Belts', 'leather-belts', 1, 'active'),
+    ('4029384752', '8578399821', 'ACCESSORIES', 'Wallets', 'wallets', 2, 'active'),
+    ('4029384753', '8578399821', 'ACCESSORIES', 'Caps & Hats', 'caps-hats', 3, 'active')
+ON CONFLICT (subcategory_id) DO UPDATE SET
+    group_name = EXCLUDED.group_name,
+    name = EXCLUDED.name,
+    slug = EXCLUDED.slug,
+    sort_order = EXCLUDED.sort_order,
+    status = EXCLUDED.status;
 
 -- Insert Sample Subcategories for WOMEN
 INSERT INTO subcategories (subcategory_id, category_id, group_name, name, slug, sort_order, status)
