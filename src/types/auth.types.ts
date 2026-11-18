@@ -32,9 +32,10 @@ export interface LoginDto {
 }
 
 export interface GoogleAuthDto {
-  googleId: string;
-  email: string;
-  fullname: string;
+  credential?: string;
+  googleId?: string;
+  email?: string;
+  fullname?: string;
   avatar?: string;
 }
 
