@@ -271,6 +271,11 @@ export class ProductService {
       sql += ` AND p.status = $${params.length}`;
     }
 
+    if (filters?.is_featured !== undefined) {
+      params.push(Boolean(filters.is_featured));
+      sql += ` AND p.is_featured = $${params.length}`;
+    }
+
     if (filters?.search && filters.search.trim()) {
       params.push(`%${filters.search.trim()}%`);
       sql += ` AND (p.title ILIKE $${params.length} OR p.sku ILIKE $${params.length} OR p.product_id ILIKE $${params.length})`;

@@ -55,6 +55,7 @@ export class ProductController {
         subcategory_id: req.query['subcategory_id'] as string,
         status: req.query['status'] as string,
         search: req.query['search'] as string,
+        is_featured: req.query['is_featured'] !== undefined ? req.query['is_featured'] === 'true' : undefined,
       };
       const products = await productService.getProducts(filters);
       res.json({ success: true, count: products.length, data: products });

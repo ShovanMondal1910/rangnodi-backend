@@ -12,5 +12,6 @@ export const config = {
     database: process.env.DB_NAME || 'Rangnodi',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '1910',
+    ssl: process.env.DB_SSL === 'true' || (process.env.DB_HOST && process.env.DB_HOST !== 'localhost'),
   },
 };
